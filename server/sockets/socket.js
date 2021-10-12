@@ -17,25 +17,31 @@ io.on("connection", (client) => {
 
     let personas = usuarios.agregarPersona(client.id, data.nombre, data.sala);
 
-    client.broadcast.emit("listadoPersona", usuarios.getPersona());
+    client.broadcast
+      .to(data.sala)
+      .emit("listaPersona", usuarios.getPersonaPorSala(data.sala));
 
-    callback(personas);
+    callback(usuarios.getPersonaPorSala(data.sala));
   });
 
   client.on("crearMensaje", (data) => {
     let persona = usuarios.getPersona(client.id);
     let mensaje = crearMensaje(persona.nombre, data.mensaje);
-    client.broadcast.emit("crearMensaje", mensaje);
+    client.broadcast.to(persona.sala).emit("crearMensaje", mensaje);
   });
 
   client.on("disconnect", () => {
     let personaBorrada = usuarios.borrarPersona(client.id);
 
-    client.broadcast.emit(
-      "crearMensaje",
-      crearMensaje("Administrador", `${personaBorrada.nombre} salio`)
-    );
-    client.broadcast.emit("listadoPersona", usuarios.getPersona());
+    client.broadcast
+      .to(personaBorrada.sala)
+      .emit(
+        "crearMensaje",
+        crearMensaje("Administrador", `${personaBorrada.nombre} salio`)
+      );
+    client.broadcast
+      .to(personaBorrada.sala)
+      .emit("listaPersona", usuarios.getPersonaPorSala(personaBorrada.sala));
   });
 
   // Mensajes privados
